@@ -32,3 +32,4 @@ pub fn censor_token(token: &str) -> String {
 
   arr.join(".")
 }
+
