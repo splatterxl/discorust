@@ -3,7 +3,7 @@ use reqwest::{header::HeaderMap, Client, ClientBuilder, Response};
 
 #[derive(Debug, Clone)]
 pub struct HTTP {
-	token: Option<&'static str>,
+	token: Option<String>,
 	api_version: i8,
 	client: Option<Client>,
 }
@@ -23,12 +23,15 @@ impl HTTP {
 		match &self.client {
 			Some(client) => {
 				let req = client
-					.get(BASE_URL.to_owned() + "v" + &self.api_version.to_string() + endpoint)
+					.get(String::from(BASE_URL) + "v" + &self.api_version.to_string() + endpoint)
 					.build();
 
 				match req {
 					Ok(request) => {
 						let resp = client.execute(request).await?;
+						if resp.status() == 401 {
+							panic!("An invalid token was provided to the client");
+						}
 						Ok(resp)
 					}
 					Err(err) => {
@@ -42,15 +45,18 @@ impl HTTP {
 		}
 	}
 
-	pub fn set_token(&mut self, token: &'static str) {
+	pub fn set_token(&mut self, token: String) {
 		self.token = Some(token);
 	}
 
 	pub fn init(&mut self) {
-		match self.token {
+		match &self.token {
 			Some(_value) => {
 				let mut headers = HeaderMap::new();
-				headers.insert("Authorization", self.token.unwrap().parse().unwrap());
+				headers.insert(
+					"Authorization",
+					(self.token.clone().unwrap()).parse().unwrap(),
+				);
 				let builder = ClientBuilder::new().default_headers(headers);
 				match builder.build() {
 					Ok(client) => {
