@@ -1,11 +1,37 @@
 use crate::types::GetGatewayBot;
 use reqwest::{header::HeaderMap, Client, ClientBuilder, Response};
+use std::{error::Error, fmt};
 
 #[derive(Debug, Clone)]
 pub struct HTTP {
 	token: Option<String>,
 	api_version: i8,
 	client: Option<Client>,
+}
+
+#[derive(Debug)]
+pub struct RateLimitError<'a> {
+  details: &'a str
+}
+
+impl RateLimitError<'_> {
+  pub fn new() -> Self {
+    Self {
+        details: "You are being rate-limited."
+    }
+  }
+}
+
+impl fmt::Display for RateLimitError<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,"{}",self.details)
+    }
+}
+
+impl Error for RateLimitError<'_> {
+    fn description(&self) -> &str {
+        &self.details
+    }
 }
 
 const BASE_URL: &'static str = "https://discord.com/api/";
@@ -29,10 +55,14 @@ impl HTTP {
 				match req {
 					Ok(request) => {
 						let resp = client.execute(request).await?;
-						if resp.status() == 401 {
+                        let status = resp.status();
+						if status == 401 {
 							panic!("An invalid token was provided to the client");
-						}
-						Ok(resp)
+						} else if status == 429 {
+                            Err(Box::new(RateLimitError::new()))
+                        } else {
+                            Ok(resp)
+                        }
 					}
 					Err(err) => {
 						panic!("An error occurred when building the request. {}", err);

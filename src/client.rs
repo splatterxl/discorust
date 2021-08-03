@@ -1,10 +1,9 @@
-use crate::http::HTTP;
-use crate::util;
-
-#[derive(Debug, Clone)]
+use crate::{http::HTTP, util, ws::manager::WebSocketManager};
+#[derive(Debug)]
 pub struct Client {
 	pub token: String,
 	pub http: HTTP,
+    pub ws: WebSocketManager
 }
 
 pub const BASE_TOKEN: &'static str = "";
@@ -14,6 +13,7 @@ impl Client {
 		Self {
 			token: String::from(BASE_TOKEN),
 			http: HTTP::new(9),
+            ws: WebSocketManager::new()
 		}
 	}
 
@@ -38,10 +38,13 @@ impl Client {
 			);
 			match self.http.get_gateway_bot().await {
 				Ok(resp) => {
-					dbg!(resp);
+                    if resp.shards > 1 {
+                        panic!("discorust does not support sharding at the current time.");
+                    }
+                    self.ws.connect(resp.url).await;
 				}
 				Err(err) => {
-					panic!("Could not GET /gateway/bot. {}", err);
+					return Err(err)
 				}
 			}
 

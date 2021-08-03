@@ -2,15 +2,15 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct GetGatewayBot {
-	url: String,
-	shards: i32,
-	session_start_limit: GatewaySessionStartLimit,
+	pub url: String,
+	pub shards: i32,
+	pub session_start_limit: GatewaySessionStartLimit,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct GatewaySessionStartLimit {
-	total: i32,
-	remaining: i32,
-	reset_after: f64,
-	max_concurrency: i32,
+	pub total: i32,
+	pub remaining: i32,
+	pub reset_after: f64,
+	pub max_concurrency: i32,
 }

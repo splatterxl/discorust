@@ -30,3 +30,6 @@ pub fn censor_token(token: &String) -> String {
 
 	arr.join(".")
 }
+
+pub struct Object {}
+
