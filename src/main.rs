@@ -5,7 +5,7 @@ use std::fs;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let token = unsafe {
 		String::from_utf8_unchecked(
-			fs::read(format!("{}/token.env", env!("PWD"))).expect("Expected a token.env file."),
+			fs::read(format!("{}/token.env", env!("PWD"))).expect("Expected a token.env file"),
 		)
 	};
 	let mut client = Client::new();

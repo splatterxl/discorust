@@ -32,4 +32,3 @@ pub fn censor_token(token: &String) -> String {
 }
 
 pub struct Object {}
-
