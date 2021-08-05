@@ -3,7 +3,7 @@ use reqwest::{header::HeaderMap, Client, ClientBuilder, Response};
 use std::{error::Error, fmt};
 
 #[derive(Debug, Clone)]
-pub struct HTTP {
+pub struct HTTPClient {
 	token: Option<String>,
 	api_version: i8,
 	client: Option<Client>,
@@ -36,7 +36,7 @@ impl Error for RateLimitError<'_> {
 
 const BASE_URL: &'static str = "https://discord.com/api/";
 
-impl HTTP {
+impl HTTPClient {
 	pub fn new(api_version: i8) -> Self {
 		Self {
 			token: None,

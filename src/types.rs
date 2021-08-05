@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
 pub struct GetGatewayBot {
@@ -15,7 +15,7 @@ pub struct GatewaySessionStartLimit {
 	pub max_concurrency: i32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct GatewayDispatch<Data> {
 	pub op: u8,
 	pub s: Option<u64>,
@@ -23,25 +23,12 @@ pub struct GatewayDispatch<Data> {
 	pub t: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct HelloDispatch {
 	pub heartbeat_interval: u32,
 }
 
-#[derive(Deserialize, Debug)]
-pub enum Opcodes {
-	Dispatch,
-	Heartbeat,
-	Identify,
-	PresenceUpdate,
-	VoiceStateUpdate,
-	Resume,
-	Reconnect,
-	RequestGuildMembers,
-	InvalidSession,
-	Hello,
-	HeartbeatAck,
-}
+pub mod Opcodes;
 
 pub enum GatewayCloseCodes {
 	UnknownError = 1000,
@@ -58,4 +45,9 @@ pub enum GatewayCloseCodes {
 	InvalidAPIVersion,
 	InvalidIntents,
 	DisallowedIntents,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct IdentifyDispatch {
+    token: String
 }

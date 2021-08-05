@@ -1,9 +1,9 @@
 use crate::{
-	types::{GatewayDispatch, HelloDispatch},
+	types::{GatewayDispatch, HelloDispatch, Opcodes, IdentifyDispatch},
 	ws::listeners::OpcodeListener,
 };
-use futures_util::StreamExt;
-use serde_json::from_str;
+use futures_util::{StreamExt, stream::{SplitSink, SplitStream}};
+use serde_json::{from_str, to_string};
 use std::collections::HashMap;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
@@ -15,6 +15,9 @@ pub struct WebSocketManager {
 	listeners: HashMap<u8, OpcodeListener>,
 	stream: Option<WebSocketStream<MaybeTlsStream<TcpStream>>>,
 	heartbeat_interval: u32,
+    write: Option<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>,
+    read: Option<SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>>,
+    token: String
 }
 
 pub const EMPTY_STRING: String = String::new();
@@ -27,14 +30,18 @@ impl WebSocketManager {
 			listeners: HashMap::new(),
 			stream: None,
 			heartbeat_interval: 0,
+            write: None,
+            read: None,
+            token: EMPTY_STRING
 		}
 	}
 
-	pub async fn connect(&mut self, url: String) -> &mut Self {
+	pub async fn connect(mut self, token: String, url: String) {
 		let url = url + "/?v=9&encoding=json";
 		if &url != &self.url {
 			self.url = url;
 		}
+        self.token = token;
 		self.url = String::from(&self.url);
 		println!("Connecting to gateway... [URL: {}]", self.url);
 		let url = Url::parse(&self.url).unwrap();
@@ -49,8 +56,6 @@ impl WebSocketManager {
 				self.stream = Some(stream);
 
 				self.listen().await;
-
-				self
 			}
 			Err(err) => {
 				dbg!(err);
@@ -60,10 +65,10 @@ impl WebSocketManager {
 		}
 	}
 
-	async fn listen(&mut self) {
+	async fn listen(mut self) {
 		let stream = self.stream.as_mut().unwrap();
 
-		let (_, mut read) = stream.split();
+		let (mut write, mut read) = stream.split();
 
 		while let Some(Ok(msg)) = read.next().await {
 			match msg {
@@ -76,11 +81,13 @@ impl WebSocketManager {
 						10 => {
 							let json = from_str::<GatewayDispatch<HelloDispatch>>(payload.as_str())
 								.unwrap();
-							self.heartbeat_interval = json.d.unwrap().heartbeat_interval;
-							println!("Set heartbeat interval to {}", self.heartbeat_interval);
-						}
+                            let interval = json.d.unwrap().heartbeat_interval;
+							self.set_heartbeat_interval(&interval);
+							println!("Set heartbeat interval to {}", &interval);
+                            self.identify(write);
+                        }
 						11 => todo!(),
-						// idk
+						// rust dies if I don't do this :weary:
 						12_u8..=u8::MAX => {}
 					}
 				}
@@ -108,4 +115,20 @@ impl WebSocketManager {
 			}
 		}
 	}
+
+    pub fn identify(mut self, stream: SplitSink<&mut WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) {
+        let token = self.token;
+        let dispatch: GatewayDispatch<IdentifyDispatch> = GatewayDispatch {
+            op: Opcodes::IDENTIFY,
+            s: None,
+            d: Some(IdentifyDispatch {
+                token
+            }),
+            t: None
+        };
+    }
+
+    fn set_heartbeat_interval(mut self, interval: &u32) {
+        self.heartbeat_interval = interval;
+    }
 }

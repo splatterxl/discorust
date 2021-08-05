@@ -1,8 +1,8 @@
-use crate::{http::HTTP, util, ws::manager::WebSocketManager};
+use crate::{http::client::HTTPClient, util, ws::manager::WebSocketManager};
 #[derive(Debug)]
 pub struct Client {
 	pub token: String,
-	pub http: HTTP,
+	pub http: HTTPClient,
 	pub ws: WebSocketManager,
 }
 
@@ -12,7 +12,7 @@ impl Client {
 	pub fn new() -> Self {
 		Self {
 			token: String::from(BASE_TOKEN),
-			http: HTTP::new(9),
+			http: HTTPClient::new(9),
 			ws: WebSocketManager::new(),
 		}
 	}
@@ -26,7 +26,7 @@ impl Client {
 		}
 	}
 
-	pub async fn connect(&mut self) -> Result<&String, Box<dyn std::error::Error>> {
+	pub async fn connect(&mut self) -> Result<(), Box<dyn std::error::Error>> {
 		if self.token == BASE_TOKEN {
 			panic!("No token provided for the client.");
 		} else {
@@ -41,12 +41,12 @@ impl Client {
 					if resp.shards > 1 {
 						panic!("discorust does not support sharding at the current time.");
 					}
-					self.ws.connect(resp.url).await;
+					self.ws.connect(&self.token, resp.url).await;
 				}
 				Err(err) => return Err(err),
 			}
-
-			Ok(&self.token)
 		}
+
+        Ok(())
 	}
 }
