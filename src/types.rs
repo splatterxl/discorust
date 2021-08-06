@@ -49,5 +49,5 @@ pub enum GatewayCloseCodes {
 
 #[derive(Deserialize, Serialize)]
 pub struct IdentifyDispatch {
-    token: String
+	token: String,
 }

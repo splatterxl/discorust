@@ -9,4 +9,3 @@ pub const REQUEST_GUILD_MEMBERS: u8 = 7;
 pub const INVALID_SESSION: u8 = 8;
 pub const HELLO: u8 = 9;
 pub const HEARTBEAT_ACK: u8 = 10;
-

@@ -47,6 +47,6 @@ impl Client {
 			}
 		}
 
-        Ok(())
+		Ok(())
 	}
 }
