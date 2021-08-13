@@ -1,6 +1,7 @@
 # discorust
 
-A Rust Discord Library Thing:tm: that I'm making to learn rust and because I have [nothing better](https://github.com/nearlySplat?tab=repositories) to do
+A Rust Discord Library Thing[TM] that I'm making to learn Rust and because I have [nothing better](https://github.com/nearlySplat?tab=repositories) to do
+
 ## FAQ
 
 ### No...
